@@ -1,0 +1,735 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Físico Teórico | String Theory & QFT</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Share+Tech+Mono&display=swap" rel="stylesheet"/>
+<style>
+  :root {
+    --bg: #050a0f;
+    --bg-card: #0a1118;
+    --bg-card-hover: #0f1a24;
+    --accent: #5eead4;
+    --accent-dim: rgba(94,234,212,0.12);
+    --accent-glow: rgba(94,234,212,0.35);
+    --text: #c8d8e4;
+    --text-dim: #5a7080;
+    --text-bright: #eef4f7;
+    --border: rgba(94,234,212,0.15);
+    --font-serif: 'Cormorant Garamond', Georgia, serif;
+    --font-mono: 'Share Tech Mono', 'Courier New', monospace;
+  }
+
+  *, *::before, *::after { box-sizing:border-box; margin:0; padding:0; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: var(--font-serif);
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+    line-height: 1.7;
+  }
+
+  /* ─── CANVAS BG ─── */
+  #bg-canvas {
+    position: fixed; inset: 0;
+    z-index: 0;
+    pointer-events: none;
+  }
+
+  /* ─── NOISE OVERLAY ─── */
+  body::before {
+    content:'';
+    position:fixed; inset:0;
+    z-index:1;
+    pointer-events:none;
+    opacity:0.035;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
+  /* ─── NAV ─── */
+  nav {
+    position: fixed; top:0; left:0; right:0;
+    z-index: 100;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.4rem 2.5rem;
+    background: linear-gradient(180deg, rgba(5,10,15,0.9) 0%, transparent 100%);
+    backdrop-filter: blur(4px);
+  }
+  .nav-logo {
+    font-family: var(--font-mono);
+    font-size: 0.82rem;
+    color: var(--accent);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    text-decoration: none;
+    opacity: 0.8;
+  }
+  .nav-links {
+    display: flex; gap: 2rem;
+    list-style: none;
+  }
+  .nav-links a {
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    color: var(--text-dim);
+    text-decoration: none;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    transition: color 0.3s;
+    position: relative;
+  }
+  .nav-links a::after {
+    content:'';
+    position:absolute; bottom:-4px; left:0;
+    width:0; height:1px;
+    background: var(--accent);
+    transition: width 0.3s;
+  }
+  .nav-links a:hover { color: var(--accent); }
+  .nav-links a:hover::after { width:100%; }
+
+  /* ─── MAIN WRAPPER ─── */
+  .wrapper {
+    position: relative;
+    z-index: 2;
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 0 2rem;
+  }
+
+  /* ─── HERO ─── */
+  .hero {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding-top: 6rem;
+  }
+  .hero-tag {
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    color: var(--accent);
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    margin-bottom: 1.8rem;
+    opacity: 0;
+    animation: fadeUp 0.8s 0.2s forwards;
+  }
+  .hero h1 {
+    font-family: var(--font-serif);
+    font-weight: 300;
+    font-size: clamp(2.8rem, 7vw, 5.2rem);
+    color: var(--text-bright);
+    line-height: 1.1;
+    letter-spacing: -1px;
+    opacity: 0;
+    animation: fadeUp 0.9s 0.4s forwards;
+  }
+  .hero h1 em {
+    font-style: italic;
+    color: var(--accent);
+    font-weight: 300;
+  }
+  .hero-sub {
+    margin-top: 1.8rem;
+    font-size: 1.15rem;
+    color: var(--text-dim);
+    max-width: 520px;
+    font-weight: 300;
+    opacity: 0;
+    animation: fadeUp 0.9s 0.6s forwards;
+  }
+  .hero-equation {
+    margin-top: 2.8rem;
+    font-family: var(--font-mono);
+    font-size: 0.78rem;
+    color: var(--text-dim);
+    letter-spacing: 1px;
+    border-left: 1px solid var(--border);
+    padding-left: 1.2rem;
+    opacity: 0;
+    animation: fadeUp 0.9s 0.8s forwards;
+  }
+  .hero-equation span { color: var(--accent); opacity:0.7; }
+
+  /* ─── SECTION TITLES ─── */
+  .section-label {
+    font-family: var(--font-mono);
+    font-size: 0.65rem;
+    color: var(--accent);
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    margin-bottom: 0.6rem;
+  }
+  .section-title {
+    font-family: var(--font-serif);
+    font-weight: 300;
+    font-size: clamp(1.6rem, 3.5vw, 2.2rem);
+    color: var(--text-bright);
+    margin-bottom: 2.4rem;
+    letter-spacing: -0.5px;
+  }
+
+  /* ─── ABOUT ─── */
+  .about { padding: 7rem 0; }
+  .about-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4rem;
+    align-items: start;
+  }
+  .about-text p {
+    color: var(--text);
+    font-size: 1.05rem;
+    margin-bottom: 1.2rem;
+    font-weight: 300;
+  }
+  .about-details {
+    display:flex; flex-direction:column; gap:1.2rem;
+  }
+  .detail-item {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1.1rem 1.3rem;
+    transition: background 0.3s, border-color 0.3s;
+  }
+  .detail-item:hover {
+    background: var(--bg-card-hover);
+    border-color: var(--accent-glow);
+  }
+  .detail-label {
+    font-family: var(--font-mono);
+    font-size: 0.6rem;
+    color: var(--accent);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 0.3rem;
+  }
+  .detail-value {
+    font-size: 0.95rem;
+    color: var(--text);
+    font-weight: 300;
+  }
+
+  /* ─── RESEARCH ─── */
+  .research { padding: 5rem 0; }
+  .research-cards {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.2rem;
+  }
+  .r-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1.8rem 1.5rem;
+    transition: all 0.35s cubic-bezier(.4,0,.2,1);
+    position: relative;
+    overflow: hidden;
+  }
+  .r-card::before {
+    content:'';
+    position:absolute; top:0; left:0; right:0;
+    height:2px;
+    background: linear-gradient(90deg, transparent, var(--accent), transparent);
+    opacity:0;
+    transition: opacity 0.4s;
+  }
+  .r-card:hover {
+    background: var(--bg-card-hover);
+    border-color: var(--accent-glow);
+    transform: translateY(-3px);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+  }
+  .r-card:hover::before { opacity:1; }
+  .r-card-icon {
+    font-size: 1.6rem;
+    margin-bottom: 1rem;
+    display:block;
+  }
+  .r-card h3 {
+    font-family: var(--font-serif);
+    font-weight: 600;
+    font-size: 1.1rem;
+    color: var(--text-bright);
+    margin-bottom: 0.6rem;
+  }
+  .r-card p {
+    font-size: 0.88rem;
+    color: var(--text-dim);
+    font-weight: 300;
+    line-height: 1.6;
+  }
+
+  /* ─── SKILLS / TOOLS ─── */
+  .skills { padding: 5rem 0; }
+  .skills-wrap {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.7rem;
+  }
+  .skill-tag {
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    color: var(--accent);
+    background: var(--accent-dim);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 0.4rem 1rem;
+    letter-spacing: 0.5px;
+    transition: all 0.3s;
+  }
+  .skill-tag:hover {
+    background: var(--accent-glow);
+    border-color: var(--accent);
+    color: var(--bg);
+  }
+
+  /* ─── PUBLICATIONS (placeholder) ─── */
+  .publications { padding: 5rem 0; }
+  .pub-list { display:flex; flex-direction:column; gap: 1rem; }
+  .pub-item {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1.3rem 1.6rem;
+    display:flex; gap:1.5rem; align-items:flex-start;
+    transition: border-color 0.3s, background 0.3s;
+  }
+  .pub-item:hover {
+    border-color: var(--accent-glow);
+    background: var(--bg-card-hover);
+  }
+  .pub-year {
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    color: var(--accent);
+    white-space: nowrap;
+    padding-top:0.15rem;
+    letter-spacing:1px;
+  }
+  .pub-content h4 {
+    font-family: var(--font-serif);
+    font-weight: 600;
+    font-size: 1rem;
+    color: var(--text-bright);
+    margin-bottom: 0.25rem;
+  }
+  .pub-content p {
+    font-size:0.82rem;
+    color: var(--text-dim);
+    font-weight:300;
+  }
+  .pub-content a {
+    font-family: var(--font-mono);
+    font-size:0.65rem;
+    color: var(--accent);
+    text-decoration:none;
+    letter-spacing:1px;
+    display:inline-block;
+    margin-top:0.4rem;
+    transition: opacity 0.2s;
+  }
+  .pub-content a:hover { opacity:0.6; }
+
+  /* ─── CONTACT ─── */
+  .contact { padding: 6rem 0 8rem; }
+  .contact-grid {
+    display:grid;
+    grid-template-columns: 1.2fr 1fr;
+    gap: 3.5rem;
+    align-items:start;
+  }
+  .contact-text p {
+    font-size: 1.05rem;
+    color: var(--text);
+    font-weight:300;
+    margin-bottom:1.5rem;
+  }
+  .contact-links { display:flex; flex-direction:column; gap:0.8rem; }
+  .contact-link {
+    display:flex; align-items:center; gap:0.9rem;
+    text-decoration:none;
+    padding: 0.9rem 1.2rem;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--bg-card);
+    transition: all 0.3s;
+  }
+  .contact-link:hover {
+    border-color: var(--accent-glow);
+    background: var(--bg-card-hover);
+    transform: translateX(4px);
+  }
+  .contact-link-icon {
+    width:32px; height:32px;
+    background: var(--accent-dim);
+    border-radius:6px;
+    display:flex; align-items:center; justify-content:center;
+    font-size:0.9rem;
+  }
+  .contact-link-text {
+    display:flex; flex-direction:column;
+  }
+  .contact-link-label {
+    font-family: var(--font-mono);
+    font-size: 0.6rem;
+    color: var(--text-dim);
+    letter-spacing:1.5px;
+    text-transform:uppercase;
+  }
+  .contact-link-value {
+    font-size: 0.9rem;
+    color: var(--text-bright);
+    font-weight:300;
+  }
+
+  /* ─── FOOTER ─── */
+  footer {
+    border-top: 1px solid var(--border);
+    padding: 1.8rem 0;
+    display:flex;
+    justify-content: space-between;
+    align-items:center;
+  }
+  footer p {
+    font-family: var(--font-mono);
+    font-size: 0.62rem;
+    color: var(--text-dim);
+    letter-spacing:1px;
+  }
+
+  /* ─── DIVIDER ─── */
+  .divider {
+    width:60px; height:1px;
+    background: linear-gradient(90deg, var(--accent), transparent);
+    margin-bottom: 2rem;
+  }
+
+  /* ─── ANIMATIONS ─── */
+  @keyframes fadeUp {
+    from { opacity:0; transform:translateY(22px); }
+    to   { opacity:1; transform:translateY(0); }
+  }
+  .reveal {
+    opacity:0; transform:translateY(28px);
+    transition: opacity 0.7s cubic-bezier(.4,0,.2,1), transform 0.7s cubic-bezier(.4,0,.2,1);
+  }
+  .reveal.visible {
+    opacity:1; transform:translateY(0);
+  }
+
+  /* ─── RESPONSIVE ─── */
+  @media (max-width:680px) {
+    nav { padding:1rem 1.4rem; }
+    .nav-links { gap:1rem; }
+    .wrapper { padding:0 1.2rem; }
+    .about-grid { grid-template-columns:1fr; gap:2.5rem; }
+    .research-cards { grid-template-columns:1fr; }
+    .contact-grid { grid-template-columns:1fr; gap:2rem; }
+  }
+</style>
+</head>
+<body>
+
+<!-- BACKGROUND CANVAS (particle/field) -->
+<canvas id="bg-canvas"></canvas>
+
+<!-- NAV -->
+<nav>
+  <a href="#" class="nav-logo">&#x2202; / &#x222B;</a>
+  <ul class="nav-links">
+    <li><a href="#about">Sobre</a></li>
+    <li><a href="#research">Pesquisa</a></li>
+    <li><a href="#publications">Publicações</a></li>
+    <li><a href="#contact">Contato</a></li>
+  </ul>
+</nav>
+
+<div class="wrapper">
+
+  <!-- ─── HERO ─── -->
+  <section class="hero">
+    <p class="hero-tag">Física Teórica</p>
+    <h1>Explorando a estrutura<br/><em>mais profunda</em> da realidade</h1>
+    <p class="hero-sub">
+      Pesquisador dedicado à compreensão das fundações matemáticas do universo —
+      desde as vibrações de cordas que compõem a matéria até os campos que moldam o espaço-tempo.
+    </p>
+    <p class="hero-equation">
+      <span>S</span> = &#8722; <span>T</span>/2 &#8745; d²&sigma; &#8747; √( &#8722;h<sub>ab</sub> ) h<sup>ab</sup> G<sub>&mu;&nu;</sub> &#8202;&#8202;— <span>ação de Nambu–Goto</span>
+    </p>
+  </section>
+
+  <!-- ─── ABOUT ─── -->
+  <section class="about" id="about">
+    <div class="reveal">
+      <p class="section-label">// 01</p>
+      <h2 class="section-title">Sobre mim</h2>
+    </div>
+    <div class="about-grid">
+      <div class="about-text reveal">
+        <p>
+          Sou físico teórico com formação e pesquisa concentrada nas estruturas matemáticas
+          mais profundas da física fundamental. Meu trabalho transita entre a elegância
+          geométrica da <strong style="color:var(--accent);font-weight:400;">Teoria de Cordas</strong>,
+          os métodos analíticos da <strong style="color:var(--accent);font-weight:400;">Física Matemática</strong>
+          e a formalismo de
+          <strong style="color:var(--accent);font-weight:400;">Teorias Quanticas de Campos</strong>.
+        </p>
+        <p>
+          Movido pela crença de que as equações mais belas descrevem a realidade mais profunda,
+          busco contribuir para a unificação das forças fundamentais e para a compreensão da natureza
+          do espaço-tempo em escalas de Planck.
+        </p>
+      </div>
+      <div class="about-details reveal">
+        <div class="detail-item">
+          <p class="detail-label">Área Principal</p>
+          <p class="detail-value">Física Teórica & Matemática</p>
+        </div>
+        <div class="detail-item">
+          <p class="detail-label">Especializações</p>
+          <p class="detail-value">Teoria de Cordas · TQC · Geometria Diferencial Aplicada</p>
+        </div>
+        <div class="detail-item">
+          <p class="detail-label">Localização</p>
+          <p class="detail-value">Brasil</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── RESEARCH ─── -->
+  <section class="research" id="research">
+    <div class="reveal">
+      <p class="section-label">// 02</p>
+      <h2 class="section-title">Áreas de Pesquisa</h2>
+    </div>
+    <div class="research-cards">
+      <div class="r-card reveal">
+        <span class="r-card-icon">&#x1D4B5;</span>
+        <h3>Teoria de Cordas</h3>
+        <p>Exploração das fundações da supercorda e supergravidade — tentativas de unificação das interações fundamentais numa única estrutura coerente em 10 ou 26 dimensões.</p>
+      </div>
+      <div class="r-card reveal">
+        <span class="r-card-icon">&#x2202;<sub>&#mu;</sub></span>
+        <h3>Física Matemática</h3>
+        <p>Desenvolvimento de métodos rigorosos para formalizar teorias físicas: variedades de Calabi–Yau, cohomologia, representações de álgebras e integrabilidade em sistemas dinâmicos.</p>
+      </div>
+      <div class="r-card reveal">
+        <span class="r-card-icon">&#x1D711;</span>
+        <h3>Teorias Quanticas de Campos</h3>
+        <p>Estudo da renormalização, funções de Green, simetrias de gauge e a estrutura perturbativa e não-perturbativa de teorias como a QCD e Yang–Mills.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── SKILLS ─── -->
+  <section class="skills" id="skills">
+    <div class="reveal">
+      <p class="section-label">// 03</p>
+      <h2 class="section-title">Ferramentas & Métodos</h2>
+    </div>
+    <div class="skills-wrap reveal">
+      <span class="skill-tag">LaTeX</span>
+      <span class="skill-tag">Python</span>
+      <span class="skill-tag">Mathematica</span>
+      <span class="skill-tag">Julia</span>
+      <span class="skill-tag">C++</span>
+      <span class="skill-tag">Geometria Diferencial</span>
+      <span class="skill-tag">Álgebra de Lie</span>
+      <span class="skill-tag">Renormalização</span>
+      <span class="skill-tag">Supergravidade</span>
+      <span class="skill-tag">Integrabilidade</span>
+      <span class="skill-tag">Monte Carlo</span>
+      <span class="skill-tag">Perturbação Teórica</span>
+      <span class="skill-tag">Git</span>
+    </div>
+  </section>
+
+  <!-- ─── PUBLICATIONS ─── -->
+  <section class="publications" id="publications">
+    <div class="reveal">
+      <p class="section-label">// 04</p>
+      <h2 class="section-title">Publicações</h2>
+    </div>
+    <div class="pub-list">
+      <div class="pub-item reveal">
+        <span class="pub-year">2024</span>
+        <div class="pub-content">
+          <h4>Título da Publicação</h4>
+          <p>Breve descrição do trabalho e suas implicações teóricas.</p>
+          <a href="#">→ arXiv</a>
+        </div>
+      </div>
+      <div class="pub-item reveal">
+        <span class="pub-year">2024</span>
+        <div class="pub-content">
+          <h4>Título da Publicação</h4>
+          <p>Breve descrição do trabalho e suas implicações teóricas.</p>
+          <a href="#">→ arXiv</a>
+        </div>
+      </div>
+      <div class="pub-item reveal">
+        <span class="pub-year">2023</span>
+        <div class="pub-content">
+          <h4>Título da Publicação</h4>
+          <p>Breve descrição do trabalho e suas implicações teóricas.</p>
+          <a href="#">→ arXiv</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── CONTACT ─── -->
+  <section class="contact" id="contact">
+    <div class="reveal">
+      <p class="section-label">// 05</p>
+      <h2 class="section-title">Contato</h2>
+    </div>
+    <div class="contact-grid">
+      <div class="contact-text reveal">
+        <p>
+          Aberto a colaborações científicas, discussões sobre física teórica,
+          ou quaisquer outras questões acadêmicas. Não hesite em entrar em contato.
+        </p>
+      </div>
+      <div class="contact-links reveal">
+        <a href="#" class="contact-link">
+          <div class="contact-link-icon">&#9993;</div>
+          <div class="contact-link-text">
+            <span class="contact-link-label">Email</span>
+            <span class="contact-link-value">seu.email@email.com</span>
+          </div>
+        </a>
+        <a href="#" class="contact-link">
+          <div class="contact-link-icon">&#x1F4CE;</div>
+          <div class="contact-link-text">
+            <span class="contact-link-label">GitHub</span>
+            <span class="contact-link-value">github.com/seu-usuario</span>
+          </div>
+        </a>
+        <a href="#" class="contact-link">
+          <div class="contact-link-icon">&#x1F4DA;</div>
+          <div class="contact-link-text">
+            <span class="contact-link-label">arXiv / ORCID</span>
+            <span class="contact-link-value">seu-id-orcid</span>
+          </div>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer class="reveal">
+    <p>&copy; 2025 — Física Teórica</p>
+    <p>Feito com rigor e curiosidade.</p>
+  </footer>
+</div>
+
+<!-- ─── SCRIPTS ─── -->
+<script>
+// ─── CANVAS: QUANTUM FIELD PARTICLES ───
+(function(){
+  const canvas = document.getElementById('bg-canvas');
+  const ctx = canvas.getContext('2d');
+  let W, H, particles = [];
+
+  function resize(){
+    W = canvas.width = window.innerWidth;
+    H = canvas.height = window.innerHeight;
+  }
+  resize();
+  window.addEventListener('resize', resize);
+
+  class Particle {
+    constructor(){
+      this.reset();
+    }
+    reset(){
+      this.x = Math.random() * W;
+      this.y = Math.random() * H;
+      this.vx = (Math.random()-0.5)*0.4;
+      this.vy = (Math.random()-0.5)*0.4;
+      this.r = Math.random()*1.2 + 0.3;
+      this.alpha = Math.random()*0.25 + 0.05;
+      this.life = Math.random()*200;
+      this.maxLife = 150 + Math.random()*150;
+    }
+    update(){
+      this.x += this.vx;
+      this.y += this.vy;
+      this.life++;
+      if(this.life > this.maxLife) this.reset();
+      if(this.x<-10||this.x>W+10||this.y<-10||this.y>H+10) this.reset();
+    }
+    draw(){
+      let progress = this.life / this.maxLife;
+      let a = this.alpha * (1 - Math.abs(progress - 0.5)*2);
+      ctx.beginPath();
+      ctx.arc(this.x, this.y, this.r, 0, Math.PI*2);
+      ctx.fillStyle = `rgba(94,234,212,${a})`;
+      ctx.fill();
+    }
+  }
+
+  // init particles
+  for(let i=0;i<120;i++) particles.push(new Particle());
+
+  // connections
+  function drawConnections(){
+    for(let i=0; i<particles.length; i++){
+      for(let j=i+1; j<particles.length; j++){
+        let dx = particles[i].x - particles[j].x;
+        let dy = particles[i].y - particles[j].y;
+        let dist = Math.sqrt(dx*dx+dy*dy);
+        if(dist < 130){
+          let a = (1 - dist/130)*0.06;
+          ctx.beginPath();
+          ctx.moveTo(particles[i].x, particles[i].y);
+          ctx.lineTo(particles[j].x, particles[j].y);
+          ctx.strokeStyle = `rgba(94,234,212,${a})`;
+          ctx.lineWidth = 0.5;
+          ctx.stroke();
+        }
+      }
+    }
+  }
+
+  function animate(){
+    ctx.clearRect(0,0,W,H);
+    particles.forEach(p => { p.update(); p.draw(); });
+    drawConnections();
+    requestAnimationFrame(animate);
+  }
+  animate();
+})();
+
+// ─── SCROLL REVEAL ───
+(function(){
+  const reveals = document.querySelectorAll('.reveal');
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach((entry, i) => {
+      if(entry.isIntersecting){
+        setTimeout(() => entry.target.classList.add('visible'), i * 80);
+        observer.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.15, rootMargin: '0px 0px -40px 0px' });
+
+  reveals.forEach(el => observer.observe(el));
+})();
+</script>
+</body>
+</html>
